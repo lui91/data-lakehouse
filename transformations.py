@@ -19,57 +19,15 @@ from pyspark.sql.functions import col, when, count
 
 # COMMAND ----------
 
-data.columns
+data.count()
 
 # COMMAND ----------
 
-data = data.drop('__index_level_0__')
+data.limit(1).display()
 
 # COMMAND ----------
 
-data.select('*').limit(1).show()
-
-# COMMAND ----------
-
-data.describe().collect()
-
-# COMMAND ----------
-
-dtypes = set()
-[dtypes.add(data_type[1]) for data_type in data.dtypes]
-dtypes
-
-# COMMAND ----------
-
-str_columns = [column[0] for column in data.dtypes if column[1] == 'string']
-str_columns
-
-# COMMAND ----------
-
-data = data.withColumn("DivAirportLandings",col("DivAirportLandings").cast("double")).collect()
-
-# COMMAND ----------
-
-airport_col = data.select('DivAirportLandings')
-data = data.drop('DivAirportLandings')
-data.describe()
-
-# COMMAND ----------
-
-double_air = airport_col.withColumn("DivAirportLandings",col("DivAirportLandings").cast("double")).collect()
-double_air.select(count(when(col("DivAirportLandings").isNull(), 1))).show()
-
-# COMMAND ----------
-
-data.select(str_columns).show(1)
-
-# COMMAND ----------
-
-data_casted.describe()
-
-# COMMAND ----------
-
-data.select([count(when(col(c).isNull(), c)).alias(c) for c in data.columns]).show()
+data.select([count(when(col(c).isNull(), c)).alias(c) for c in data.columns]).display()
 
 # COMMAND ----------
 
@@ -78,6 +36,10 @@ data = data.dropna()
 # COMMAND ----------
 
 data.count()
+
+# COMMAND ----------
+
+data.write.format('delta').saveAsTable('flights.flights_data')
 
 # COMMAND ----------
 
