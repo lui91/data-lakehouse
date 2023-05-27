@@ -11,49 +11,39 @@ spark.conf.set("fs.azure.account.oauth.provider.type.syntweetsstorage.dfs.core.w
 spark.conf.set("fs.azure.account.oauth2.client.id.syntweetsstorage.dfs.core.windows.net", "4ced5214-f937-4cef-b680-5395a174647c")
 spark.conf.set("fs.azure.account.oauth2.client.secret.syntweetsstorage.dfs.core.windows.net", service_credential)
 spark.conf.set("fs.azure.account.oauth2.client.endpoint.syntweetsstorage.dfs.core.windows.net", "https://login.microsoftonline.com/6497bc6d-7e82-48c2-b571-9e9489ce1a4c/oauth2/token")
+spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", "true")
 
 # COMMAND ----------
 
-landingZoneLocation = "/tmp/flights/landingZone"
-spark.conf.set("c.ingestDatabase", "flights")
-spark.conf.set("c.ingestLandingZone", "dbfs:" + landingZoneLocation)
-# Solve decimal convertion loading problem
-spark.conf.set("spark.sql.parquet.enableVectorizedReader", "false")
+# %sql
+# USE flights;
+# CREATE TABLE flights.flights_data_landing
+# USING PARQUET
+# LOCATION 'abfss://airlines@syntweetsstorage.dfs.core.windows.net/'
+
+# COMMAND ----------
+
+# %sql
+# DESCRIBE DETAIL flights.flights_data_landing
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Create delta table
+# MAGIC # Create and load data with copy into
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE ${c.ingestDatabase};
-# MAGIC CREATE TABLE ${c.ingestDatabase}.flights_data_landing;
+# MAGIC USE flights;
+# MAGIC CREATE TABLE IF NOT EXISTS flights_data_landing;
+# MAGIC
+# MAGIC COPY INTO flights_data_landing
+# MAGIC FROM 'abfss://airlines@syntweetsstorage.dfs.core.windows.net/*.parquet'
+# MAGIC FILEFORMAT = PARQUET
+# MAGIC FORMAT_OPTIONS ('mergeSchema' = 'true',
+# MAGIC                 'header' = 'true')
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC DROP TABLE ${c.ingestDatabase}.flights_data_landing;
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC USE ${c.ingestDatabase};
-# MAGIC CREATE TABLE ${c.ingestDatabase}.flights_data_landing
-# MAGIC USING PARQUET
-# MAGIC LOCATION 'abfss://airlines@syntweetsstorage.dfs.core.windows.net/'
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC DESCRIBE DETAIL ${c.ingestDatabase}.flights_data_landing
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT COUNT(*) FROM ${c.ingestDatabase}.flights_data_landing; 
-
-# COMMAND ----------
-
-
+# MAGIC DESCRIBE DETAIL flights.flights_data_landing
