@@ -39,7 +39,7 @@ data.count()
 
 # COMMAND ----------
 
-data.write.format('delta').saveAsTable('flights_data')
+data.write.format('delta').saveAsTable('flights.flights_data')
 
 # COMMAND ----------
 
